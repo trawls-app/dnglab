@@ -306,7 +306,7 @@ where
   Ok(())
 }
 
-fn fill_exif_root(raw_ifd: &mut DirectoryWriter, exif: &Exif) -> Result<()> {
+pub fn fill_exif_root(raw_ifd: &mut DirectoryWriter, exif: &Exif) -> Result<()> {
   transfer_entry(raw_ifd, ExifTag::Orientation, &exif.orientation)?;
   transfer_entry(raw_ifd, ExifTag::ModifyDate, &exif.modify_date)?;
   transfer_entry(raw_ifd, ExifTag::Copyright, &exif.copyright)?;
@@ -364,7 +364,7 @@ fn fill_exif_root(raw_ifd: &mut DirectoryWriter, exif: &Exif) -> Result<()> {
   Ok(())
 }
 
-fn fill_exif_ifd(exif_ifd: &mut DirectoryWriter, exif: &Exif) -> Result<()> {
+pub fn fill_exif_ifd(exif_ifd: &mut DirectoryWriter, exif: &Exif) -> Result<()> {
   transfer_entry(exif_ifd, ExifTag::FNumber, &exif.fnumber)?;
   transfer_entry(exif_ifd, ExifTag::ApertureValue, &exif.aperture_value)?;
   transfer_entry(exif_ifd, ExifTag::BrightnessValue, &exif.brightness_value)?;
@@ -410,7 +410,7 @@ fn fill_exif_ifd(exif_ifd: &mut DirectoryWriter, exif: &Exif) -> Result<()> {
 /// Write RAW image data into DNG
 ///
 /// Encode raw image data as new raw IFD with NewSubFileType 0
-fn dng_put_raw(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage, params: &ConvertParams) -> Result<()> {
+pub fn dng_put_raw(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage, params: &ConvertParams) -> Result<()> {
   match params.photometric_conversion {
     DngPhotometricCoversion::Original => raw_writer::write_rawimage(raw_ifd, rawimage, params)?,
 
@@ -444,7 +444,7 @@ fn dng_put_raw(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage, param
 /// GBGB
 /// RGRG
 /// GBGB
-fn dng_put_raw_ljpeg(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage, predictor: u8) -> Result<()> {
+pub fn dng_put_raw_ljpeg(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage, predictor: u8) -> Result<()> {
   let tile_w = 256 & !0b111; // ensure div 16
   let tile_h = 256 & !0b111;
 
@@ -513,7 +513,7 @@ fn dng_put_raw_ljpeg(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage,
 ///
 /// This uses unsigned 16 bit values for storage
 /// Data is split into multiple strips
-fn dng_put_raw_uncompressed(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage) -> Result<()> {
+pub fn dng_put_raw_uncompressed(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &RawImage) -> Result<()> {
   match rawimage.data {
     RawImageData::Integer(ref data) => {
       let mut strip_offsets: Vec<u32> = Vec::new();
@@ -543,7 +543,7 @@ fn dng_put_raw_uncompressed(raw_ifd: &mut DirectoryWriter<'_, '_>, rawimage: &Ra
 }
 
 /// Write thumbnail image into DNG
-fn dng_put_thumbnail(ifd: &mut DirectoryWriter<'_, '_>, img: &DynamicImage) -> Result<()> {
+pub fn dng_put_thumbnail(ifd: &mut DirectoryWriter<'_, '_>, img: &DynamicImage) -> Result<()> {
   let thumb_img = img.resize(240, 120, FilterType::Nearest).to_rgb8();
 
   ifd.add_tag(TiffCommonTag::ImageWidth, thumb_img.width() as u32)?;
@@ -566,7 +566,7 @@ fn dng_put_thumbnail(ifd: &mut DirectoryWriter<'_, '_>, img: &DynamicImage) -> R
   Ok(())
 }
 
-fn dng_put_preview(ifd: &mut DirectoryWriter<'_, '_>, img: &DynamicImage) -> Result<()> {
+pub fn dng_put_preview(ifd: &mut DirectoryWriter<'_, '_>, img: &DynamicImage) -> Result<()> {
   let now = Instant::now();
   let preview_img = DynamicImage::ImageRgb8(img.resize(1024, 768, FilterType::Nearest).to_rgb8());
   debug!("preview downscale: {} s", now.elapsed().as_secs_f32());
@@ -605,7 +605,7 @@ fn dng_put_preview(ifd: &mut DirectoryWriter<'_, '_>, img: &DynamicImage) -> Res
 }
 
 /// DNG requires the WB values to be the reciprocal
-fn wbcoeff_to_tiff_value(rawimage: &RawImage) -> Vec<Rational> {
+pub fn wbcoeff_to_tiff_value(rawimage: &RawImage) -> Vec<Rational> {
   assert!([3, 4].contains(&rawimage.cfa.unique_colors()));
   let wb = &rawimage.wb_coeffs;
   let mut values = Vec::with_capacity(4);
@@ -620,6 +620,6 @@ fn wbcoeff_to_tiff_value(rawimage: &RawImage) -> Vec<Rational> {
   values
 }
 
-fn matrix_to_tiff_value(xyz_to_cam: &[f32], d: i32) -> Vec<SRational> {
+pub fn matrix_to_tiff_value(xyz_to_cam: &[f32], d: i32) -> Vec<SRational> {
   xyz_to_cam.iter().map(|a| SRational::new((a * d as f32) as i32, d)).collect()
 }
